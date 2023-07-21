@@ -8,6 +8,7 @@
 rm(list=ls())
 
 ## Setting your working directory----
+setwd("C:/Users/bngla/Dropbox/GitHub/policy-rules-database")
 current_directory<-getwd()
 
 ## Load expense parameters ----
@@ -32,8 +33,8 @@ source(paste0(current_directory,"/functions/expense_functions.R"), local=TRUE) #
 source(paste0(current_directory,"/functions/BenefitsCalculator_functions.R"), local=TRUE) # Benefits Calculator functions
 
 # SPECIFY PROJECT----
-PROJECT<-"TEST"
-#PROJECT<-"unit_test"
+# PROJECT<-"TEST"
+PROJECT<-"income_national_analysis"
 
 ## 1. Settings----
 
@@ -123,4 +124,19 @@ data2<-data %>%
 
 write.csv(data2, file = paste0(current_directory,"/output/results_",PROJECT, ".csv"), row.names = FALSE)
 
+min_wage <- table.minWage %>% filter(Year == 2022)
 
+load(paste0(current_directory,"/output/state_median_wages.RData"))
+
+data3 <- data %>% 
+  select(stateName,  
+         famsize, numadults, numkids,
+         income,total.transfers,total.taxes,AfterTaxIncome) %>%
+  mutate(income_transfers = AfterTaxIncome + total.transfers) %>%
+  group_by(stateName) %>% 
+  filter(total.transfers == max(total.transfers)) %>% 
+  distinct()  %>% 
+  left_join(state_median) %>% 
+  mutate(hours_to_max = round(income/median_hourly_wage_fifty,0))
+
+write.csv(data3, file = paste0(current_directory,"/output/results_hours_to_max_transfer.csv"), row.names = FALSE)
